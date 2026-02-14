@@ -1,0 +1,359 @@
+/* 1. RESET: Ensures consistent spacing across browsers */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* 2. LAYOUT: Flexbox centers content vertically and horizontally */
+body {
+    background-color: #ffe6e9;
+    font-family: 'Arial', sans-serif;
+    display: flex;              /* Enables flexbox */
+    justify-content: center;    /* Centers horizontally */
+    align-items: center;        /* Centers vertically */
+    min-height: 100vh;          /* Ensures body takes full screen height */
+    text-align: center;
+    padding: 20px;              /* Prevents content touching edges on mobile */
+}
+
+/* 3. CONTAINER: Keeps content grouped nicely */
+.main-wrapper {
+    width: 100%;
+    max-width: 600px;           /* Prevents it from getting too wide on desktop */
+}
+
+h1 {
+    color: #d63384;
+    margin-bottom: 25px;
+    font-size: 2.5rem;          /* Responsive text unit */
+}
+
+/* 4. BUTTONS */
+.bloom-btn {
+    background-color: #ff4d6d;
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    font-size: 1.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.bloom-btn:hover {
+    transform: scale(1.05);
+    background-color: #c9184a;
+}
+
+/* 5. ICONS: Flexible spacing */
+.nav-links {
+    display: flex;
+    justify-content: center;
+    gap: 30px;                  /* Space between icons */
+    flex-wrap: wrap;            /* Allows wrapping on very small screens */
+    margin: 20px 0;
+}
+
+.icon-link {
+    font-size: 4rem;
+    text-decoration: none;
+    transition: transform 0.3s;
+}
+
+.icon-link:hover {
+    transform: scale(1.2);
+}
+
+/* 6. ANIMATIONS */
+.hidden {
+    display: none;
+}
+
+.visible {
+    display: block;
+    animation: popIn 0.8s ease-out forwards;
+}
+
+@keyframes popIn {
+    0% { opacity: 0; transform: scale(0.5); }
+    80% { transform: scale(1.1); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.subtitle {
+    color: #ff8fa3;
+    font-size: 1.2rem;
+    margin-top: 10px;
+}
+
+/* 7. MOBILE SPECIFIC: Adjusts sizes for small screens */
+@media (max-width: 600px) {
+    h1 { font-size: 2rem; }
+    .icon-link { font-size: 3rem; }
+    .bloom-btn { padding: 12px 30px; font-size: 1.2rem; }
+}
+
+/* --- GALLERY SPECIFIC STYLES --- */
+
+/* Different background for the gallery page if you want */
+.gallery-body {
+    background-color: #f8f9fa; /* Light grey to make photos pop */
+    overflow-x: hidden;
+}
+
+.controls {
+    margin-bottom: 20px;
+}
+
+.download-btn {
+    background-color: #333;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s;
+}
+
+.download-btn:hover {
+    background-color: #000;
+}
+
+/* The Board holding the strips */
+.gallery {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap; /* Stacks vertically on mobile */
+    padding: 20px;
+}
+
+/* The Photo Strip Card */
+.photo-strip {
+    background: white;
+    padding: 15px 15px 25px 15px;
+    width: 280px; /* Fixed width for strip look */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transform: translateY(50px);
+    opacity: 0;
+    animation: slideUp 0.8s forwards;
+    transition: transform 0.3s;
+}
+
+.photo-strip:hover {
+    transform: scale(1.02) !important; /* Slight zoom on hover */
+    z-index: 10;
+}
+
+/* The individual photo holes */
+.photo-frame {
+    width: 100%;
+    height: 220px; /* Height of each photo */
+    background: #eee;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+.photo-frame img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures photos don't stretch */
+    filter: grayscale(20%); /* Optional: Vintage look */
+    transition: filter 0.3s;
+}
+
+.photo-strip:hover .photo-frame img {
+    filter: grayscale(0%); /* Full color on hover */
+}
+
+/* Text at bottom of strip */
+.strip-footer {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.strip-footer h2 {
+    font-family: 'Courier New', monospace; /* Typewriter look */
+    font-size: 1.5rem;
+    color: #333;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.strip-footer .date {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 5px;
+    letter-spacing: 1px;
+}
+
+/* Animation */
+@keyframes slideUp {
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile Fixes */
+@media (max-width: 600px) {
+    .gallery { gap: 40px; }
+    .photo-strip { width: 100%; max-width: 320px; }
+}
+/* ... existing styles ... */
+
+/* SIMPLE & CLEAN BACK BUTTON */
+.back-btn {
+    position: absolute;       /* Forces it to the corner regardless of other elements */
+    top: 20px;
+    left: 20px;
+    display: inline-block;
+    padding: 10px 25px;
+    background-color: #ffffff;
+    color: #ff4d6d;           /* Matches your theme pink */
+    text-decoration: none;
+    border-radius: 50px;      /* Pill shape */
+    font-family: 'Arial', sans-serif;
+    font-weight: bold;
+    font-size: 1rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    z-index: 1000;            /* Ensures it sits ON TOP of everything */
+}
+
+.back-btn:hover {
+    transform: scale(1.05);   /* Slight grow effect */
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    background-color: #fff0f3; /* Very light pink on hover */
+}
+
+/* Ensure body doesn't hide the button on small screens */
+.gallery-body {
+    position: relative; 
+    min-height: 100vh;
+    padding-top: 60px; /* Gives space so content doesn't overlap the button */
+}
+
+/* ... existing styles ... */
+
+/* --- MOBILE RESPONSIVENESS FIXES --- */
+
+@media (max-width: 768px) {
+    /* 1. Gallery Fixes */
+    .gallery-body {
+        padding-top: 80px; /* More space for the back button */
+    }
+    
+    .photo-strip {
+        width: 100%;       /* Use full width of phone */
+        max-width: 340px;  /* But don't get HUGE */
+        margin: 0 auto;    /* Center it */
+    }
+
+    /* 2. Menu Fixes */
+    .bloom-btn {
+        padding: 12px 30px;
+        font-size: 1.2rem;
+    }
+
+    .nav-links {
+        gap: 15px;         /* Move icons closer together */
+    }
+
+    .icon-link {
+        font-size: 3rem;   /* Make icons slightly smaller */
+    }
+
+    h1 {
+        font-size: 2rem;
+        padding: 0 10px;   /* Prevent text hitting edge of screen */
+    }
+}
+
+/* 3. Very Small Screens (e.g., Galaxy Fold folded) */
+@media (max-width: 350px) {
+    .icon-link { font-size: 2.5rem; }
+    .nav-links { gap: 10px; }
+}
+
+/* Add this to your existing .photo-strip style */
+.photo-strip {
+    /* ... existing styles ... */
+    cursor: pointer; /* Shows hand icon */
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+/* Add a hover effect so they know it's interactive */
+.photo-strip:hover {
+    transform: scale(1.05) translateY(-10px) !important;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+    z-index: 50;
+}
+
+/* Button Styling (if not already there) */
+.download-btn {
+    background-color: #ff4d6d;
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+    box-shadow: 0 4px 10px rgba(255, 77, 109, 0.4);
+    transition: all 0.2s;
+}
+
+.download-btn:hover {
+    transform: scale(1.1);
+    background-color: #d90429;
+}
+
+/* Ensure the container takes up the full width and centers the strips */
+.main-board {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 0;
+}
+
+/* This is the magic part for "Divided" strips in one row */
+.gallery {
+    display: flex;
+    flex-direction: row;      /* Side-by-side on desktop */
+    justify-content: center;   /* Centers the group of strips */
+    align-items: flex-start;
+    gap: 20px;                /* Space between the "divided" strips */
+    flex-wrap: nowrap;        /* Forces them to stay in one row on desktop */
+    max-width: 1200px;        /* Keeps them from spreading too far on giant monitors */
+    margin: 0 auto;
+}
+
+/* Individual strip styling */
+.photo-strip {
+    background: white;
+    padding: 12px 12px 20px 12px;
+    width: 250px;             /* Fixed width so they look like film strips */
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;           /* Prevents the strips from squishing */
+}
+
+/* MOBILE RESPONSIVENESS: Stack them when the screen is too small */
+@media (max-width: 900px) {
+    .gallery {
+        flex-direction: column; /* Stacks vertically on phones */
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    
+    .photo-strip {
+        width: 280px;           /* Slightly wider on mobile for better visibility */
+        margin-bottom: 20px;
+    }
+}

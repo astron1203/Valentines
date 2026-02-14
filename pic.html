@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pictures</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+<body class="gallery-body">
+
+    <a href="index.html?bloom=true" class="back-btn">← Back</a>
+
+    <div class="main-wrapper">
+    <div class="controls">
+        <button onclick="downloadAll()" class="download-btn">FREE PICTURES!</button>
+    </div>
+
+    <div id="capture-area" style="padding: 20px; background: #f8f9fa;">
+        <div class="gallery">
+            
+            <div class="photo-strip">
+                <div class="photo-frame"><img src="images/5.jpg" alt="Memory"></div>
+                <div class="photo-frame"><img src="images/3.jpg" alt="Memory"></div>
+                <div class="photo-frame"><img src="images/7.jpg" alt="Memory"></div>
+                
+            </div>
+
+            <div class="photo-strip">
+                <div class="photo-frame"><img src="images/1.jpg" alt="Memory"></div>
+                <div class="photo-frame"><img src="images/10.jpg" alt="Memory"></div>
+                <div class="photo-frame"><img src="images/11.jpeg" alt="Memory"></div>
+                
+            </div>
+
+            <div class="photo-strip">
+                <div class="photo-frame"><img src="images/8.jpg" alt="Memory"></div>
+                <div class="photo-frame"><img src="images/12.jpg" alt="Memory"></div>
+                <div class="photo-frame"><img src="images/4.jpg" alt="Memory"></div>
+                
+            </div>
+
+        </div>
+    </div>
+</div>
+
+    <script src="script.js"></script>
+</body>
+</html>

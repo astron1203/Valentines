@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Tiny-Winged Meadow</title>
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #a2d2ff; 
+            font-family: 'Arial', sans-serif; 
+        }
+
+        /* Back Button Styling */
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 25px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #ff4d6d;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s, background 0.2s;
+            z-index: 100;
+            font-family: sans-serif;
+        }
+        .back-btn:hover { transform: scale(1.1); background: #fff; }
+
+        /* UI Text Styling */
+        #ui {
+            position: absolute;
+            bottom: 30px; 
+            width: 100%; 
+            text-align: center;
+            color: #ffffff; 
+            pointer-events: none; 
+            z-index: 10;
+            font-size: 1.2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html?bloom=true" class="back-btn">← Back</a>
+    <div id="ui">✨ Guide the cute friend with your mouse or finger! ✨</div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+
+        // ============================
+        // 1. SCENE SETUP & LIGHTING
+        // ============================
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xa2d2ff);
+        scene.fog = new THREE.FogExp2(0xa2d2ff, 0.025);
+
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 5, 12);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+        scene.add(ambient);
+
+        const sun = new THREE.DirectionalLight(0xffffff, 1.5);
+        sun.position.set(10, 20, 10);
+        sun.castShadow = true;
+        sun.shadow.mapSize.set(2048, 2048);
+        sun.shadow.camera.left = -20; sun.shadow.camera.right = 20;
+        sun.shadow.camera.top = 20;  sun.shadow.camera.bottom = -20;
+        scene.add(sun);
+
+        const dummy = new THREE.Object3D();
+
+        // ============================
+        // 2. THE RICH ENVIRONMENT
+        // ============================
+        
+        // --- Lush Grass ---
+        const grassCount = 30000;
+        const grassGeo = new THREE.PlaneGeometry(0.15, 1.2);
+        const posAttr = grassGeo.attributes.position;
+        for (let i = 0; i < posAttr.count; i++) {
+            if (posAttr.getY(i) > 0.5) posAttr.setX(i, posAttr.getX(i) * 0.1);
+        }
+        const grassMat = new THREE.MeshLambertMaterial({ color: 0x7eb067, side: THREE.DoubleSide });
+        const grassMesh = new THREE.InstancedMesh(grassGeo, grassMat, grassCount);
+        
+        for (let i = 0; i < grassCount; i++) {
+            dummy.position.set((Math.random()-0.5)*50, 0.6, (Math.random()-0.5)*50);
+            dummy.rotation.y = Math.random() * Math.PI;
+            dummy.rotation.z = (Math.random()-0.5) * 0.3;
+            dummy.scale.setScalar(0.5 + Math.random() * 0.5);
+            dummy.updateMatrix();
+            grassMesh.setMatrixAt(i, dummy.matrix);
+        }
+        grassMesh.receiveShadow = true;
+        scene.add(grassMesh);
+
+        // --- Detailed Flowers ---
+        const flowerColors = [0xff8fab, 0xffc2d1, 0xfeb737, 0xbde0fe, 0xffffff];
+        function createFlower(x, z, color) {
+            const group = new THREE.Group();
+            const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2), new THREE.MeshLambertMaterial({color: 0x5a8a4a}));
+            stem.position.y = 1; stem.castShadow = true; group.add(stem);
+            
+            const petalGeo = new THREE.SphereGeometry(0.25, 8, 8); petalGeo.scale(1, 0.2, 1);
+            const petalMat = new THREE.MeshPhongMaterial({color: color});
+            for(let i=0; i<6; i++){
+                const petal = new THREE.Mesh(petalGeo, petalMat);
+                petal.position.y = 2;
+                const angle = (i/6)*Math.PI*2;
+                petal.position.x = Math.cos(angle)*0.3; petal.position.z = Math.sin(angle)*0.3;
+                petal.lookAt(0, 10, 0); petal.castShadow = true; group.add(petal);
+            }
+            const center = new THREE.Mesh(new THREE.SphereGeometry(0.15), new THREE.MeshLambertMaterial({color: 0xffe66d}));
+            center.position.y = 2; center.castShadow = true; group.add(center);
+            
+            group.position.set(x, 0, z);
+            group.scale.setScalar(0.8 + Math.random()*0.4);
+            group.rotation.y = Math.random() * Math.PI;
+            scene.add(group);
+        }
+        for (let i = 0; i < 35; i++) createFlower((Math.random()-0.5)*35, (Math.random()-0.5)*35, flowerColors[i%5]);
+
+        // ============================
+        // 3. THE CUTE BUTTERFLY MODEL
+        // ============================
+        const butterfly = new THREE.Group();
+        
+        // A. Chubby Body
+        const body = new THREE.Mesh(
+            new THREE.CapsuleGeometry(0.3, 0.6, 8, 16),
+            new THREE.MeshPhongMaterial({ color: 0xffefbb })
+        );
+        body.rotation.x = Math.PI / 2; body.castShadow = true;
+        butterfly.add(body);
+
+        // B. Big Cute Eyes
+        const eyeGeo = new THREE.SphereGeometry(0.12, 16, 16);
+        const eyeMat = new THREE.MeshPhongMaterial({ color: 0x222222 });
+        const eyeL = new THREE.Mesh(eyeGeo, eyeMat); eyeL.position.set(-0.15, 0.15, 0.4);
+        const eyeR = new THREE.Mesh(eyeGeo, eyeMat); eyeR.position.set(0.15, 0.15, 0.4);
+        butterfly.add(eyeL, eyeR);
+
+        // C. Cute Antennae
+        const antGeo = new THREE.CylinderGeometry(0.02, 0.02, 0.5);
+        const antMat = new THREE.MeshLambertMaterial({ color: 0x444444 });
+        const antL = new THREE.Mesh(antGeo, antMat); antL.position.set(-0.2, 0.5, 0.3); antL.rotation.z = 0.5;
+        const antR = new THREE.Mesh(antGeo, antMat); antR.position.set(0.2, 0.5, 0.3); antR.rotation.z = -0.5;
+        butterfly.add(antL, antR);
+
+        // D. Round Wings with Pivots
+        const pivotL = new THREE.Object3D(); pivotL.position.x = -0.2;
+        const pivotR = new THREE.Object3D(); pivotR.position.x = 0.2;
+        butterfly.add(pivotL, pivotR);
+
+        const wingGeo = new THREE.CircleGeometry(0.85, 32);
+        const wingMat = new THREE.MeshPhongMaterial({ 
+            color: 0xffc2d1, side: THREE.DoubleSide, transparent: true, opacity: 0.9 
+        });
+
+        const wingL = new THREE.Mesh(wingGeo, wingMat); wingL.position.x = -0.6; wingL.castShadow = true; pivotL.add(wingL);
+        const wingR = new THREE.Mesh(wingGeo, wingMat); wingR.position.x = 0.6; wingR.castShadow = true; pivotR.add(wingR);
+
+        butterfly.position.set(0, 4, 0);
+        scene.add(butterfly);
+
+        // ============================
+        // 4. POLLEN PARTICLES
+        // ============================
+        const pCount = 300;
+        const pGeo = new THREE.SphereGeometry(0.04, 4, 4);
+        const pMat = new THREE.MeshBasicMaterial({color: 0xffffff, transparent: true, opacity: 0.6});
+        const particles = new THREE.InstancedMesh(pGeo, pMat, pCount);
+        
+        const pData = [];
+        for(let i=0; i<pCount; i++) {
+            pData.push({
+                x: (Math.random()-0.5)*40,
+                y: Math.random()*10,
+                z: (Math.random()-0.5)*40,
+                speed: 0.01 + Math.random()*0.03
+            });
+        }
+        scene.add(particles);
+
+        // ============================
+        // 5. ANIMATION & INTERACTION
+        // ============================
+        let mouseX = 0, mouseY = 0;
+
+        // Desktop Mouse Interaction
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        // Mobile Touch Interaction (THE FIX)
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault(); // Prevents screen scrolling while moving butterfly
+            const touch = e.touches[0];
+            mouseX = (touch.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(touch.clientY / window.innerHeight) * 2 + 1;
+        }, { passive: false });
+
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const t = clock.getElapsedTime();
+
+            // --- Butterfly Animation ---
+            const flap = Math.sin(t * 20) * 0.9;
+            pivotL.rotation.z = flap;
+            pivotR.rotation.z = -flap;
+
+            // Smooth movement towards mouse
+            const targetX = mouseX * 8;
+            const targetY = (mouseY * 4) + 4;
+            butterfly.position.x += (targetX - butterfly.position.x) * 0.05;
+            butterfly.position.y += (targetY - butterfly.position.y) * 0.05;
+            
+            // Banking and Bobbing
+            butterfly.rotation.z = (butterfly.position.x - targetX) * 0.1; 
+            butterfly.rotation.y = (butterfly.position.x - targetX) * -0.05; 
+            butterfly.position.y += Math.sin(t * 3) * 0.02; 
+
+            // --- Particle Animation ---
+            for(let i=0; i<pCount; i++) {
+                const d = pData[i];
+                d.y -= d.speed;
+                if(d.y < 0) d.y = 10;
+                
+                dummy.position.set(d.x, d.y, d.z);
+                dummy.position.x += Math.sin(t + d.y)*0.005;
+                dummy.updateMatrix();
+                particles.setMatrixAt(i, dummy.matrix);
+            }
+            particles.instanceMatrix.needsUpdate = true;
+
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>

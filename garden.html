@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Ethereal Sakura Garden</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #050205; /* Deep midnight */
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        canvas { display: block; }
+
+        /* UI Overlay for Gradient */
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 80%, rgba(255, 20, 147, 0.1) 0%, transparent 60%);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Back Button */
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 182, 193, 0.5);
+            color: #ffb7c5;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+            z-index: 100;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 182, 193, 0.2);
+            color: white;
+            box-shadow: 0 0 15px rgba(255, 182, 193, 0.4);
+        }
+
+        /* Instruction Sign */
+        .instruction {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
+            z-index: 100;
+            animation: pulse 3s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html?bloom=true" class="back-btn">← Back</a>
+    <div class="instruction">✨ Click anywhere to grow a flower! ✨</div>
+    
+    <div class="overlay"></div>
+    <canvas id="sakuraCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('sakuraCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Off-screen buffer for the tree (optimizes performance)
+        const treeBuffer = document.createElement('canvas');
+        const tCtx = treeBuffer.getContext('2d');
+
+        let petals = [];
+        let grassBlades = [];
+        let garden = [];
+        let stars = [];
+        
+        const moonRadius = 60;
+        let moonX, moonY;
+
+        // --- Grass Class ---
+        class Grass {
+            constructor(x) {
+                this.x = x;
+                this.height = Math.random() * 40 + 50; 
+                this.bend = Math.random() * 20 - 10;
+                this.thickness = Math.random() * 2 + 1; 
+                this.color = Math.random() > 0.5 ? "#0f2e18" : "#0d2114";
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.x, canvas.height);
+                ctx.quadraticCurveTo(
+                    this.x, 
+                    canvas.height - this.height * 0.5, 
+                    this.x + this.bend, 
+                    canvas.height - this.height
+                );
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = this.thickness;
+                ctx.stroke();
+            }
+        }
+
+        // --- Plant Class (Click Interaction) ---
+        class Plant {
+            constructor(x, targetY) {
+                this.x = x;
+                this.targetY = targetY;
+                this.currentY = canvas.height;
+                this.curveOffset = Math.random() * 40 - 20; 
+                this.bloomSize = 0;
+                this.maxBloomSize = Math.random() * 6 + 4;
+                this.stemDone = false;
+                this.color = ["#ffb7c5", "#ff69b4", "#ffffff", "#e0f7fa"][Math.floor(Math.random() * 4)];
+            }
+            update() {
+                if (this.currentY > this.targetY) {
+                    this.currentY -= (this.currentY - this.targetY) * 0.05 + 1;
+                } else {
+                    this.stemDone = true;
+                    if (this.bloomSize < this.maxBloomSize) this.bloomSize += 0.15;
+                }
+            }
+            draw() {
+                const height = canvas.height - this.currentY;
+                const totalDist = canvas.height - this.targetY;
+                const progress = height / totalDist;
+
+                ctx.beginPath();
+                ctx.moveTo(this.x, canvas.height);
+                ctx.quadraticCurveTo(
+                    this.x + this.curveOffset * progress, 
+                    canvas.height - height / 2, 
+                    this.x + (this.curveOffset * progress), 
+                    this.currentY
+                );
+                ctx.strokeStyle = "#4a6b4a";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                if (this.stemDone || this.bloomSize > 0.5) {
+                    ctx.save();
+                    ctx.translate(this.x + (this.curveOffset * progress), this.currentY);
+                    ctx.fillStyle = this.color;
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = this.color;
+                    
+                    for (let i = 0; i < 5; i++) {
+                        ctx.rotate((Math.PI * 2) / 5);
+                        ctx.beginPath();
+                        ctx.ellipse(this.bloomSize, 0, this.bloomSize, this.bloomSize/2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.fillStyle = "#fff";
+                    ctx.beginPath();
+                    ctx.arc(0,0, this.bloomSize/3, 0, Math.PI*2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+        }
+
+        // --- Falling Petal Class (Made Bigger) ---
+        class Petal {
+            constructor() {
+                this.reset();
+                this.y = Math.random() * canvas.height;
+            }
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                // INCREASED SIZE HERE
+                this.size = Math.random() * 6 + 4; 
+                this.speedY = Math.random() * 1 + 0.5;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = (Math.random() - 0.5) * 2;
+                this.opacity = Math.random() * 0.5 + 0.5;
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX + Math.sin(this.y * 0.01) * 0.5;
+                this.rotation += this.rotationSpeed;
+
+                if (this.y > canvas.height + 20) {
+                    this.reset();
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = "#ffb7c5";
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.size, this.size/1.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // --- Recursive Tree Logic (Added Leaves & Bigger Blossoms) ---
+        function drawTree(startX, startY, len, angle, branchWidth) {
+            tCtx.beginPath();
+            tCtx.save();
+            
+            tCtx.strokeStyle = "#2d1b1b";
+            tCtx.lineWidth = branchWidth;
+            tCtx.lineCap = 'round';
+            tCtx.translate(startX, startY);
+            tCtx.rotate(angle * Math.PI / 180);
+            tCtx.moveTo(0, 0);
+            tCtx.lineTo(0, -len);
+            tCtx.stroke();
+
+            // End of a branch - Draw Leaves and Blossom
+            if (len < 10) {
+                
+                // 1. Draw Green Leaves first (so they are behind the blossom)
+                const numLeaves = Math.floor(Math.random() * 3) + 2; // 2 to 4 leaves
+                for(let i=0; i<numLeaves; i++) {
+                     tCtx.save();
+                     tCtx.translate(0, -len);
+                     tCtx.rotate((Math.random() - 0.5) * 2); // Random angle around tip
+                     tCtx.beginPath();
+                     // Leaf shape
+                     tCtx.ellipse(0, 5, Math.random()*6+5, Math.random()*3+2, 0, 0, Math.PI*2);
+                     // Varied green colors
+                     tCtx.fillStyle = ["#2d5a27", "#4a6b4a", "#1e4d2b", "#3e5c3e"][Math.floor(Math.random()*4)];
+                     tCtx.fill();
+                     tCtx.restore();
+                }
+
+                // 2. Draw Sakura Cluster (INCREASED SIZE)
+                tCtx.beginPath();
+                // Bigger radius
+                tCtx.arc(0, -len, Math.random() * 8 + 6, 0, Math.PI * 2);
+                tCtx.fillStyle = ["#ffb7c5", "#ff69b4", "#f8bbd0"][Math.floor(Math.random() * 3)];
+                // Stronger glow for bigger blossoms
+                tCtx.shadowBlur = 15;
+                tCtx.shadowColor = "rgba(255, 105, 180, 0.7)";
+                tCtx.fill();
+                
+                tCtx.restore();
+                return;
+            }
+
+            const angleVariance = 25; 
+            
+            drawTree(0, -len, len * 0.75, angle - angleVariance + (Math.random()*10), branchWidth * 0.7);
+            drawTree(0, -len, len * 0.75, angle + angleVariance - (Math.random()*10), branchWidth * 0.7);
+            
+            if(Math.random() > 0.6) {
+                drawTree(0, -len, len * 0.6, angle + (Math.random()*20 - 10), branchWidth * 0.6);
+            }
+
+            tCtx.restore();
+        }
+
+        // --- Star Class ---
+        class Star {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * (canvas.height * 0.6);
+                this.size = Math.random() * 1.5;
+                this.baseAlpha = Math.random() * 0.5 + 0.3;
+                this.twinkleSpeed = Math.random() * 0.05 + 0.01;
+                this.alpha = this.baseAlpha;
+                this.time = Math.random() * 100;
+            }
+            draw() {
+                this.time += this.twinkleSpeed;
+                this.alpha = this.baseAlpha + Math.sin(this.time) * 0.2;
+                
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.fillStyle = "white";
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // --- Main Animation Loop ---
+        function animate() {
+            ctx.fillStyle = "#050205";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            stars.forEach(s => s.draw());
+            
+            ctx.save();
+            ctx.translate(moonX, moonY);
+            ctx.shadowBlur = 60;
+            ctx.shadowColor = "rgba(255, 255, 240, 0.3)";
+            ctx.fillStyle = "#fffceb";
+            ctx.beginPath();
+            ctx.arc(0, 0, moonRadius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            
+            ctx.beginPath();
+            ctx.ellipse(canvas.width/2, canvas.height - 50, 400, 40, 0, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 105, 180, 0.03)";
+            ctx.fill();
+            
+            ctx.drawImage(treeBuffer, 0, 0);
+            
+            grassBlades.forEach(g => g.draw());
+            
+            petals.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            garden.forEach(plant => {
+                plant.update();
+                plant.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        function init() {
+            canvas.width = treeBuffer.width = window.innerWidth;
+            canvas.height = treeBuffer.height = window.innerHeight;
+            moonX = canvas.width * 0.85;
+            moonY = canvas.height * 0.15;
+            
+            stars = [];
+            for(let i = 0; i < 60; i++) stars.push(new Star());
+
+            // Generate Tree (Pre-render)
+            tCtx.clearRect(0, 0, canvas.width, canvas.height);
+            let treeBaseX = canvas.width / 2;
+            let treeBaseY = canvas.height;
+            // Slightly thicker base branch
+            drawTree(treeBaseX, treeBaseY, 130, 0, 20);
+            
+            // Reduced petal count slightly as they are bigger now
+            petals = Array.from({length: 100}, () => new Petal());
+            
+            grassBlades = [];
+            for(let i = 0; i < canvas.width; i+=8) {
+                grassBlades.push(new Grass(i));
+            }
+            
+            garden = [];
+        }
+
+        canvas.addEventListener('click', (e) => {
+            if (e.clientX < 150 && e.clientY < 80) return;
+            garden.push(new Plant(e.clientX, e.clientY));
+        });
+
+        window.addEventListener('resize', init);
+        
+        init();
+        animate();
+    </script>
+</body>
+</html>
